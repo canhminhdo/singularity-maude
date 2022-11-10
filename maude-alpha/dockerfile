@@ -123,6 +123,3 @@ RUN cd /app \
 RUN cd /Maude-alpha \
     && rm -rf model-checker.maude \
     && wget https://raw.githubusercontent.com/canhminhdo/Maude/timer/src/Main/model-checker.maude
-
-
-
