@@ -1,0 +1,128 @@
+FROM ubuntu:20.04
+
+RUN apt-get -y update && apt-get install -y \
+    vim \
+    wget \
+    git \
+    curl \
+    zip \
+    unzip \
+    lzip \
+    gperf \
+    g++ \
+    make \
+    autoconf \
+    bison \
+    flex \
+    libncurses6 \
+    libncursesw6 \
+    ncurses*
+
+# setup folder for building
+RUN mkdir -p /home/Linux64 && mkdir -p /app
+
+# install gmp lib
+RUN cd /app \
+    && wget https://gmplib.org/download/gmp/gmp-6.2.1.tar.lz \
+    && tar --lzip -xvf gmp-6.2.1.tar.lz \
+    && cd gmp-6.2.1 && mkdir build && cd build \
+    && ../configure \
+        CFLAGS="-O3 -pedantic -fno-stack-protector" \
+        CXXFLAGS="-O3 -pedantic -fno-stack-protector" \
+        --prefix=/home/Linux64 \
+        --enable-cxx \
+        --enable-fat \
+    && make && make install \
+    && cd /app \
+    && rm -rf gmp-6.2.1.tar.lz gmp-6.2.1
+
+# libsigsegv2 version 2.12-2: apt-get install -y libsigsegv2
+RUN cd /app \
+    && wget https://ftp.gnu.org/gnu/libsigsegv/libsigsegv-2.14.tar.gz \
+    && tar -xzvf libsigsegv-2.14.tar.gz \
+    && cd libsigsegv-2.14 && mkdir build && cd build \
+    && ../configure \
+        --prefix=/home/Linux64 \
+        CFLAGS="-Wall -O3 -fno-stack-protector -fstrict-aliasing" \
+    && make && make install \
+    && cd /app \
+    && rm -rf libsigsegv-2.14.tar.gz libsigsegv-2.14
+
+# libtecla1 version 1.6.3
+RUN cd /app \
+    && wget https://sites.astro.caltech.edu/~mcs/tecla/libtecla-1.6.3.tar.gz \
+    && tar -xzvf libtecla-1.6.3.tar.gz && cd libtecla \
+    && ./configure \
+        CFLAGS="-g -fno-stack-protector -O3" \
+        -host=x86-linux-gnu \
+        --prefix=/home/Linux64 \
+    && make && make install \
+    && cd /app \
+    && rm -rf libtecla-1.6.3.tar.gz libtecla
+
+# BuDDy version 2.4
+RUN cd /app \
+    && git clone https://github.com/jgcoded/BuDDy.git \
+    && cd BuDDy && chmod +x configure && mkdir build && cd build \
+    && ../configure LDFLAGS=-lm \
+        CFLAGS="-g -fno-stack-protector -O3" \
+        CXXFLAGS="-g -fno-stack-protector -O3" \
+        --prefix=/home/Linux64 \
+        --disable-shared \
+    && make && make install \
+    && cd /app \
+    && rm -rf BuDDy
+
+# Yices version 2
+RUN cd /app \
+    && git clone https://github.com/SRI-CSL/yices2.git \
+    && cd yices2 && autoconf \
+    && ./configure \
+        --prefix=/home/Linux64 \
+        --with-static-gmp=/home/Linux64/lib/libgmp.a \
+        --with-static-gmp-include-dir=/home/Linux64/include \
+        CFLAGS="-fno-stack-protector -O3" \
+        LDFLAGS="-L/home/Linux64/lib" \
+        CPPFLAGS="-I/home/Linux64/include" \
+    && make && make install \
+    && cd /app \
+    && rm -rf yices2
+
+# setup folder for distribution
+RUN mkdir -p /Maude-alpha
+
+# environment
+ENV LD_LIBRARY_PATH=/home/Linux64/lib:$LD_LIBRARY_PATH
+ENV PATH=/Maude-alpha:$PATH
+
+# clone Maude source code
+RUN cd /app \
+    && git clone https://github.com/canhminhdo/Maude.git \
+    && cd Maude && git checkout timer && mkdir build && cd build \
+    && ../configure \
+        --with-yices2=yes \
+        --with-cvc4=no \
+        --enable-compiler \
+        -host=x86-linux-gnu \
+        CFLAGS="-Wall -O3 -fno-crossjumping -fno-stack-protector -finline-limit=10000" \
+        CXXFLAGS="-Wall -O3 -fno-crossjumping -fno-stack-protector -finline-limit=10000" \
+        CPPFLAGS="-I/home/Linux64/include" \
+        LDFLAGS="-L/home/Linux64/lib" \
+        GMP_LIBS="/home/Linux64/lib/libgmpxx.a /home/Linux64/lib/libgmp.a" \
+        --prefix=/Maude-alpha \
+    && make && make install \
+    && mv /Maude-alpha/share/* /Maude-alpha/ && rm -rf /Maude-alpha/share \
+    && mv /Maude-alpha/bin/* /Maude-alpha/ && rm -rf /Maude-alpha/bin \
+    && cd /app \
+    && rm -rf Maude
+
+RUN cd /app \
+    && wget https://raw.githubusercontent.com/canhminhdo/Maude/timer/src/Main/full-maude.maude \
+    && mv full-maude.maude /Maude-alpha/
+
+RUN cd /Maude-alpha \
+    && rm -rf model-checker.maude \
+    && wget https://raw.githubusercontent.com/canhminhdo/Maude/timer/src/Main/model-checker.maude
+
+
+

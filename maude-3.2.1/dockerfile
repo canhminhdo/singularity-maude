@@ -1,0 +1,26 @@
+FROM ubuntu:20.04
+
+RUN apt-get -y update && apt-get install -y \
+    vim \
+    wget \
+    git \
+    curl \
+    zip \
+    unzip \
+    g++
+
+# setup folder
+RUN mkdir -p /app
+
+RUN cd /app \
+    && wget https://github.com/SRI-CSL/Maude/releases/download/3.2.1/Maude-3.2.1-linux.zip \
+    && unzip Maude-3.2.1-linux.zip && mv Linux64 /Maude-3.2.1 \
+    && mv /Maude-3.2.1/maude.linux64 /Maude-3.2.1/maude \
+    && rm Maude-3.2.1-linux.zip
+
+RUN cd /app \
+    && wget https://maude.cs.illinois.edu/w/images/b/bc/Full-Maude-3.2.1.zip \
+    && unzip Full-Maude-3.2.1.zip \
+    && mv full-maude.maude /Maude-3.2.1
+
+ENV PATH=/Maude-3.2.1:$PATH
