@@ -22,7 +22,7 @@ Creating a singularity image from a docker image
 
 Running a singularity container with the created signularity image in the interactive mode
 
-`singularity sheel maude-3.2.1_latest.sif`
+`singularity shell maude-3.2.1_latest.sif`
 
 Executing a command in the singularity container
 
