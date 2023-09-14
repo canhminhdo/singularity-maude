@@ -23,4 +23,6 @@ RUN cd /app \
     && unzip Full-Maude-3.2.1.zip \
     && mv full-maude.maude /Maude-3.2.1
 
+RUN rm -rf /app
+
 ENV PATH=/Maude-3.2.1:$PATH
