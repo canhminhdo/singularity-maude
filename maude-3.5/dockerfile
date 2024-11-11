@@ -1,0 +1,28 @@
+FROM ubuntu:22.04
+
+RUN apt-get -y update && apt-get install -y \
+    vim \
+    wget \
+    git \
+    curl \
+    zip \
+    unzip \
+    g++
+
+# setup folder
+RUN mkdir -p /app
+
+RUN cd /app \
+    && wget https://github.com/maude-lang/Maude/releases/download/Maude3.5/Maude-3.5-linux-x86_64.zip \
+    && unzip Maude-3.5-linux-x86_64.zip -d Maude-3.5 && mv Maude-3.5 /Maude-3.5 \
+    && rm Maude-3.5-linux-x86_64.zip
+
+RUN cd /app \
+    && wget https://maude.cs.illinois.edu/w/images/b/bc/Full-Maude-3.2.1.zip \
+    && unzip Full-Maude-3.2.1.zip \
+    && mv full-maude.maude /Maude-3.5 \
+    && rm Full-Maude-3.2.1.zip
+
+RUN rm -rf /app
+
+ENV PATH=/Maude-3.5:$PATH
